@@ -1,0 +1,21 @@
+# ROS2 build artifacts
+build/
+install/
+log/
+
+# Python virtual environment
+.venv/
+
+# VSCode settings (optional)
+.vscode/
+
+# - build/
+# → colcon build の生成物。GitHub に上げると容量が大きくなるので除外。
+# - install/
+# → ROS2 のインストールスペース。環境依存なので不要。
+# - log/
+# → 実行ログ。履歴管理には不要。
+# - .venv/
+# → Python 仮想環境。人によって環境が違うので Git 管理しない。
+# - .vscode/
+# → 個人設定。共有したい設定がある場合だけ部分的に管理すればOK。

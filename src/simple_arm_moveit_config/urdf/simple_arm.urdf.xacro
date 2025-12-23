@@ -1,0 +1,190 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="simple_arm">
+
+  <!-- =========================
+       共通: 色付きボックスリンク
+       - 完全な慣性テンソルを指定
+       - 視覚・衝突メッシュの原点を共通化
+     ========================= -->
+  <xacro:macro name="colored_box"
+               params="name size xyz color mass:=2.0
+                       ixx:=0.05 iyy:=0.05 izz:=0.05
+                       ixy:=0.0 ixz:=0.0 iyz:=0.0">
+    <link name="${name}">
+      <inertial>
+        <mass value="${mass}"/>
+        <inertia ixx="${ixx}" iyy="${iyy}" izz="${izz}"
+                 ixy="${ixy}" ixz="${ixz}" iyz="${iyz}"/>
+      </inertial>
+      <visual>
+        <origin xyz="${xyz}" rpy="0 0 0"/>
+        <geometry><box size="${size}"/></geometry>
+        <material name="${color}">
+          <color rgba="${color}"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="${xyz}" rpy="0 0 0"/>
+        <geometry><box size="${size}"/></geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <!-- =========================
+       base_link (固定台座)
+     ========================= -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.15" length="0.1"/></geometry>
+      <material name="gray_base"><color rgba="0.7 0.7 0.7 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.15" length="0.1"/></geometry>
+    </collision>
+  </link>
+
+  <!-- joint1: ベース旋回 -->
+  <joint name="joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link1"/>
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="10" velocity="1.0"/>
+  </joint>
+
+  <!-- link1: 縦リンク -->
+  <xacro:colored_box name="link1" size="0.22 0.22 0.3" xyz="0 0 0.15" color="0.2 0.4 1.0 1"/>
+
+  <!-- joint2: 肩ピッチ -->
+  <joint name="joint2" type="revolute">
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0"/>
+  </joint>
+
+  <!-- link2: 肩 -->
+  <xacro:colored_box name="link2" size="0.18 0.18 0.5" xyz="0 0 0.25" color="0.2 1.0 0.4 1"/>
+
+  <!-- joint3: 肘ピッチ -->
+  <joint name="joint3" type="revolute">
+    <parent link="link2"/>
+    <child link="link3"/>
+    <origin xyz="0 0 0.5" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0"/>
+  </joint>
+
+  <!-- link3: 上腕 -->
+  <xacro:colored_box name="link3" size="0.6 0.18 0.18" xyz="0.3 0 0" color="1.0 0.3 0.3 1"/>
+
+  <!-- joint4: 前腕回転 -->
+  <joint name="joint4" type="revolute">
+    <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="0.6 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>                   <!-- X軸回りのロール -->
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0"/>
+  </joint>
+
+  <!-- link4: 前腕 -->
+  <xacro:colored_box name="link4" size="0.5 0.16 0.16" xyz="0.25 0 0" color="1.0 1.0 0.3 1"/>
+
+  <!-- joint5: 手首ピッチ -->
+  <joint name="joint5" type="revolute">
+    <parent link="link4"/>
+    <child link="link5"/>
+    <origin xyz="0.5 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0"/>
+  </joint>
+
+  <!-- link5: 手首ピッチ部 -->
+  <xacro:colored_box name="link5" size="0.16 0.16 0.2" xyz="0 0 -0.1" color="0.6 0.3 0.9 1"/>
+
+  <!-- joint6: 手首ロール -->
+  <joint name="joint6" type="revolute">
+    <parent link="link5"/>
+    <child link="link6"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>  <!-- J5のBOX中心 -->
+    <axis xyz="0 0 1"/>                   <!-- Z軸回りのロール -->
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0"/>
+  </joint>
+
+  <!-- link6: エンドエフェクタ -->
+  <link name="link6">
+    <visual>
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.06" length="0.12"/></geometry>
+      <material name="gray"><color rgba="0.6 0.6 0.6 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.06" length="0.12"/></geometry>
+    </collision>
+  </link>
+
+  <!-- Gazeboセンサ（Ignition/Gazeboクラシック向けプラグイン記述はそのまま） -->
+  <gazebo reference="link6">
+    <sensor name="distance_sensor" type="ray">
+      <pose>0 0 0.1 0 0 0</pose>
+      <update_rate>30</update_rate>
+      <always_on>true</always_on>
+      <ray>
+        <scan><horizontal><samples>1</samples></horizontal></scan>
+        <range><min>0.01</min><max>2.0</max><resolution>0.01</resolution></range>
+      </ray>
+      <plugin name="gazebo_ros_ray_sensor" filename="libgazebo_ros_ray_sensor.so">
+        <ros><namespace>simple_arm</namespace></ros>
+        <output_type>sensor_msgs/Range</output_type>
+        <radiation_type>ultrasound</radiation_type>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- =========================
+       ros2_control 設定
+       - 各ジョイントを position 制御対象として宣言
+       - 実機がない場合は fake_components を利用
+     ========================= -->
+  <ros2_control name="SimpleArmSystem" type="system">
+    <hardware>
+      <plugin>fake_components/GenericSystem</plugin>
+    </hardware>
+
+    <joint name="joint1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint3">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint4">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint5">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint6">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+</robot>

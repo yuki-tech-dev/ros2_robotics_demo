@@ -1,0 +1,14 @@
+planning_plugin: ompl_interface/OMPLPlanner
+planner_configs:
+  RRTConnectConfigDefault:
+    type: geometric::RRTConnect
+    range: 0.0   # 0.0 = 自動調整
+
+  RRTstarConfigDefault:
+    type: geometric::RRTstar
+    range: 0.0
+
+arm:   # ← SRDFのgroup名に合わせる
+  planner_configs:
+    - RRTConnectConfigDefault
+    - RRTstarConfigDefault
